@@ -1,20 +1,47 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-              xmlns:tools="http://schemas.android.com/tools"
-              android:layout_width="match_parent"
-              android:layout_height="match_parent"
-              android:orientation="vertical"
-              android:gravity="center">
-
-<TextView
-        android:textColor="@android:color/white"
-        android:layout_width="wrap_content"
-        android:text="Step count since reboot: "
-        android:layout_height="wrap_content"/>
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+        android:id="@+id/activity_main"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:paddingBottom="16dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="16dp"
+        android:orientation="vertical"
+        android:gravity="center"
+        tools:context="pl.coderslab.step_by_step_app.MainActivity">
 
     <TextView
-        android:id="@+id/count"
-        android:textSize="36dp"
-        android:textColor="@android:color/white"
+            android:text="Steps"
             android:layout_width="wrap_content"
-              android:layout_height="wrap_content"/>
+            android:layout_height="wrap_content"
+            android:id="@+id/tv_info"/>
+
+    <TextView
+            android:text="0"
+            android:textSize="40dp"
+            android:layout_marginTop="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/count_steps"/>
+
+    <Button android:layout_width="190dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"
+            android:text="Start"
+            android:textSize="20sp"
+            android:id="@+id/startButton"/>
+
+    <Button android:layout_width="190dp"
+            android:layout_height="50dp"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"
+            android:text="End"
+            android:textSize="20sp"
+            android:id="@+id/endButton"
+            android:enabled="false"/>
+
 </LinearLayout>
