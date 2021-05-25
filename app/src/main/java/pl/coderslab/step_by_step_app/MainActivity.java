@@ -47,6 +47,12 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         pauseButton = findViewById(R.id.pauseButton);
         endButton = findViewById(R.id.endButton);
         permissionButton = findViewById(R.id.permissionButton);
+
+        if (ContextCompat.checkSelfPermission(MainActivity.this,
+                Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
+            permissionButton.setEnabled(false);
+        }
+
         startButton.setOnClickListener(v -> {
             Sensor countSensor = sensorManager.getDefaultSensor(Sensor.TYPE_STEP_COUNTER);
             if (countSensor != null) {
@@ -59,12 +65,14 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 Toast.makeText(this, "Nie znaleziono sensora.", Toast.LENGTH_SHORT).show();
             }
         });
+
         pauseButton.setOnClickListener(v -> {
             startButton.setEnabled(true);
             pauseButton.setEnabled(false);
             sensorManager.unregisterListener(this);
             isSensorActive = false;
         });
+
         endButton.setOnClickListener(v -> {
             startButton.setEnabled(true);
             pauseButton.setEnabled(false);
@@ -78,15 +86,11 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
                 e.printStackTrace();
             }
         });
+
         permissionButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (ContextCompat.checkSelfPermission(MainActivity.this,
-                        Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
-                    Toast.makeText(MainActivity.this, "You have already granted this permission.", Toast.LENGTH_SHORT).show();
-                } else {
                     requestActivityRecognitionPermission();
-                }
             }
         });
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -131,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     @Override
     public void onSensorChanged(SensorEvent event) {
         stepCount = event.values[0];
-        count_steps.setText(String.valueOf(event.values[0]));
+        count_steps.setText(String.valueOf(Math.round(event.values[0])));
     }
 
     @Override
