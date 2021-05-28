@@ -13,12 +13,7 @@
         android:gravity="center"
         tools:context="pl.coderslab.step_by_step_app.MainActivity">
 
-    <Button android:layout_width="190dp"
-            android:layout_height="50dp"
-            android:layout_marginTop="16dp"
-            android:text="Permission"
-            android:textSize="20sp"
-            android:id="@+id/permissionButton"/>
+
     <TextView
             android:text="Steps"
             android:textSize="40sp"

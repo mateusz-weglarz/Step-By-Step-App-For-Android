@@ -32,7 +32,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Button startButton;
     private Button pauseButton;
     private Button endButton;
-    private Button permissionButton;
     private float stepCount;
     private boolean isSensorActive = false;
     private final int ACTIVITY_PERMISSION_CODE = 1;
@@ -46,11 +45,10 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         startButton = findViewById(R.id.startButton);
         pauseButton = findViewById(R.id.pauseButton);
         endButton = findViewById(R.id.endButton);
-        permissionButton = findViewById(R.id.permissionButton);
 
         if (ContextCompat.checkSelfPermission(MainActivity.this,
-                Manifest.permission.ACTIVITY_RECOGNITION) == PackageManager.PERMISSION_GRANTED) {
-            permissionButton.setEnabled(false);
+                Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
+            requestActivityRecognitionPermission();
         }
 
         startButton.setOnClickListener(v -> {
@@ -87,12 +85,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
             }
         });
 
-        permissionButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                    requestActivityRecognitionPermission();
-            }
-        });
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
     }
 
@@ -125,7 +117,6 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         if (requestCode == ACTIVITY_PERMISSION_CODE){
             if(grantResults.length>0&& grantResults[0] == PackageManager.PERMISSION_GRANTED){
                 Toast.makeText(this,"Permission GRANTED",Toast.LENGTH_SHORT).show();
-                permissionButton.setEnabled(false);
             }else{
                 Toast.makeText(this,"Permission DENIED",Toast.LENGTH_SHORT).show();
             }
