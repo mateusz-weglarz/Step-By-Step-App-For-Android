@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -32,7 +33,8 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     private Button startButton;
     private Button pauseButton;
     private Button endButton;
-    private float stepCount;
+    private int stepCount;
+    private Float initialStep;
     private boolean isSensorActive = false;
     private final int ACTIVITY_PERMISSION_CODE = 1;
 
@@ -45,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         startButton = findViewById(R.id.startButton);
         pauseButton = findViewById(R.id.pauseButton);
         endButton = findViewById(R.id.endButton);
+
 
         if (ContextCompat.checkSelfPermission(MainActivity.this,
                 Manifest.permission.ACTIVITY_RECOGNITION) != PackageManager.PERMISSION_GRANTED) {
@@ -72,17 +75,13 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
         });
 
         endButton.setOnClickListener(v -> {
-            startButton.setEnabled(true);
-            pauseButton.setEnabled(false);
             endButton.setEnabled(false);
-            if (isSensorActive) {
-                sensorManager.unregisterListener(this);
-            }
             try {
                 sendRequest();
             } catch (JSONException e) {
                 e.printStackTrace();
             }
+
         });
 
         sensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
@@ -114,19 +113,24 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
-        if (requestCode == ACTIVITY_PERMISSION_CODE){
-            if(grantResults.length>0&& grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                Toast.makeText(this,"Permission GRANTED",Toast.LENGTH_SHORT).show();
-            }else{
-                Toast.makeText(this,"Permission DENIED",Toast.LENGTH_SHORT).show();
+        if (requestCode == ACTIVITY_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Permission GRANTED", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Permission DENIED", Toast.LENGTH_SHORT).show();
             }
         }
     }
 
     @Override
     public void onSensorChanged(SensorEvent event) {
-        stepCount = event.values[0];
-        count_steps.setText(String.valueOf(Math.round(event.values[0])));
+        float eventStepCount = event.values[0];
+        if (initialStep == null) {
+            initialStep = eventStepCount;
+        } else {
+            stepCount = Math.round(eventStepCount - initialStep);
+        }
+        count_steps.setText(String.valueOf(stepCount));
     }
 
     @Override
@@ -135,18 +139,26 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void sendRequest() throws JSONException {
+        long user_id = MainActivity.this.getSharedPreferences(MainActivity.this.getString(R.string.preferences), Context.MODE_PRIVATE).getLong("user_id", -1);
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
-                (Request.Method.PUT, "https://mateuszweglarz.free.beeceptor.com/test", new JSONObject().put("stepCount", stepCount), new Response.Listener<JSONObject>() {
-
+                (Request.Method.PUT, "https://mateuszweglarz.free.beeceptor.com/users/"+user_id+"/activities", new JSONObject().put("stepCount", stepCount), new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         Toast.makeText(MainActivity.this, "Odpowiedź.", Toast.LENGTH_SHORT).show();
+                        initialStep = null;
+                        stepCount = 0;
+                        startButton.setEnabled(true);
+                        pauseButton.setEnabled(false);
+                        if (isSensorActive) {
+                            sensorManager.unregisterListener(MainActivity.this);
+                        }
                     }
                 }, new Response.ErrorListener() {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         Toast.makeText(MainActivity.this, error.toString(), Toast.LENGTH_SHORT).show();
+                        endButton.setEnabled(true);
                     }
                 });
         MySingleton.getInstance(this).addToRequestQueue(jsonObjectRequest);
