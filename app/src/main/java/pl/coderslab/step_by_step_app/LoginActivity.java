@@ -14,6 +14,7 @@ import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -23,59 +24,31 @@ import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private ProgressBar loadingProgressBar;
+    public static final String CREDENTIALS = "credentials";
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_login);
+        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+        SharedPreferences sharedPreferences = LoginActivity.this.getSharedPreferences(LoginActivity.this.getString(R.string.preferences), MODE_PRIVATE);
+        if (sharedPreferences.contains(CREDENTIALS)) {
+            startActivity(intent);
+        } else {
+            setContentView(R.layout.activity_login);
+            final EditText usernameEditText = findViewById(R.id.username);
+            final EditText passwordEditText = findViewById(R.id.password);
+            final Button loginButton = findViewById(R.id.login);
 
 
-        final EditText usernameEditText = findViewById(R.id.username);
-        final EditText passwordEditText = findViewById(R.id.password);
-        final Button loginButton = findViewById(R.id.login);
-        loadingProgressBar = findViewById(R.id.loading);
+            loginButton.setOnClickListener(v -> {
+                SharedPreferences.Editor edit = sharedPreferences.edit();
+                String username = usernameEditText.getText().toString();
+                String password = passwordEditText.getText().toString();
+                edit.putString(CREDENTIALS, Base64.getEncoder().encodeToString((username + ":" + password).getBytes()));
 
-
-        loginButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                loadingProgressBar.setVisibility(View.VISIBLE);
-                registerUserInBackend(usernameEditText.getText().toString(),passwordEditText.getText().toString());
-            }
-        });
-    }
-
-    private void registerUserInBackend(String name, String password){
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
-                (Request.Method.GET, "https://mateuszweglarz.free.beeceptor.com/login", null, new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            SharedPreferences.Editor sharedPreferences = LoginActivity.this.getSharedPreferences(LoginActivity.this.getString(R.string.preferences), Context.MODE_PRIVATE).edit();
-                            sharedPreferences.putLong("user_id", response.getLong("userId")).apply();
-                            loadingProgressBar.setVisibility(View.INVISIBLE);
-                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                            startActivity(intent);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                    }
-                }) {
-            @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
-                Map<String, String> map = new HashMap<>();
-                map.put("WWW-Authenticate", Base64.getEncoder().encodeToString((name + ":" + password).getBytes()));
-                return map;
-            }
-        };
-        MySingleton.getInstance(this)
-                .addToRequestQueue(jsonObjectRequest);
+                edit.apply();
+                startActivity(intent);
+            });
+        }
     }
 }

@@ -4,13 +4,12 @@ import android.Manifest;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
-import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -19,12 +18,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import android.os.Bundle;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import org.json.JSONException;
-import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import static pl.coderslab.step_by_step_app.LoginActivity.CREDENTIALS;
 
 public class MainActivity extends AppCompatActivity implements SensorEventListener {
 
@@ -139,28 +141,35 @@ public class MainActivity extends AppCompatActivity implements SensorEventListen
     }
 
     private void sendRequest() throws JSONException {
-        long user_id = MainActivity.this.getSharedPreferences(MainActivity.this.getString(R.string.preferences), Context.MODE_PRIVATE).getLong("user_id", -1);
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
-                (Request.Method.PUT, "https://mateuszweglarz.free.beeceptor.com/users/"+user_id+"/activities", new JSONObject().put("stepCount", stepCount), new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Toast.makeText(MainActivity.this, "Odpowiedź.", Toast.LENGTH_SHORT).show();
-                        initialStep = null;
-                        stepCount = 0;
-                        startButton.setEnabled(true);
-                        pauseButton.setEnabled(false);
-                        if (isSensorActive) {
-                            sensorManager.unregisterListener(MainActivity.this);
-                        }
-                    }
-                }, new Response.ErrorListener() {
+        StringRequest jsonObjectRequest = new StringRequest(
+                Request.Method.POST, MainActivity.this.getString(R.string.create_activity_url), response -> {
+            initialStep = null;
+            stepCount = 0;
+            startButton.setEnabled(true);
+            pauseButton.setEnabled(false);
+            if (isSensorActive) {
+                sensorManager.unregisterListener(MainActivity.this);
+            }
+        }, error -> {
+            Toast.makeText(MainActivity.this, error.toString(), Toast.LENGTH_SHORT).show();
+            endButton.setEnabled(true);
+        }) {
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
+                Map<String, String> params = new HashMap<>();
+                params.put("numberOfSteps", String.valueOf(stepCount));
+                return params;
+            }
 
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Toast.makeText(MainActivity.this, error.toString(), Toast.LENGTH_SHORT).show();
-                        endButton.setEnabled(true);
-                    }
-                });
-        MySingleton.getInstance(this).addToRequestQueue(jsonObjectRequest);
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                SharedPreferences sharedPreferences = MainActivity.this.getSharedPreferences(MainActivity.this.getString(R.string.preferences), MODE_PRIVATE);
+                Map<String, String> headers = new HashMap<>();
+                String credentials = sharedPreferences.getString(CREDENTIALS, "");
+                headers.put("Authorization", "Basic " + credentials);
+                return headers;
+            }
+        };
+        HttpRequestSingleton.getInstance(this).addToRequestQueue(jsonObjectRequest);
     }
 }
